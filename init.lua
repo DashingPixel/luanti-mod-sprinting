@@ -1,8 +1,8 @@
 --[[
     I load the tools from the file now
 ]]
-local modname = minetest.get_current_modname()
-local modpath = minetest.get_modpath(modname)
+local modname = core.get_current_modname()
+local modpath = core.get_modpath(modname)
 local update_air_time,
 player_is_on_ground,
 player_is_in_liquid, 
@@ -24,31 +24,31 @@ local GRACE_TIME = 0.15 -- seconds to allow initial acceleration
 DOUBLE_TAP_TIME = math.max(DOUBLE_TAP_TIME, tonumber(core.settings:get("dedicated_server_step")) * 2.5)
 
 -- Mod settings with default values
-local USE_AUX1 = minetest.settings:get_bool("sprinting_use_aux1", true)
+local USE_AUX1 = core.settings:get_bool("sprinting_use_aux1", true)
 
-local SPEED_MULTIPLIER = tonumber(minetest.settings:get("sprinting_speed_multiplier")) or 1.5
-local JUMP_MULTIPLIER = tonumber(minetest.settings:get("sprinting_jump_multiplier")) or 1.10
+local SPEED_MULTIPLIER = tonumber(core.settings:get("sprinting_speed_multiplier")) or 1.5
+local JUMP_MULTIPLIER = tonumber(core.settings:get("sprinting_jump_multiplier")) or 1.10
 
-local ENABLE_STAMINA_DRAIN = minetest.settings:get_bool("sprinting_drain_stamina", true)
-local STAMINA_DRAIN = tonumber(minetest.settings:get("sprinting_stamina_drain")) or 5
-local STAMINA_THRESHOLD = tonumber(minetest.settings:get("sprinting_stamina_threshold")) or 20
+local ENABLE_STAMINA_DRAIN = core.settings:get_bool("sprinting_drain_stamina", true)
+local STAMINA_DRAIN = tonumber(core.settings:get("sprinting_stamina_drain")) or 5
+local STAMINA_THRESHOLD = tonumber(core.settings:get("sprinting_stamina_threshold")) or 20
 
-local REQUIRE_GROUND = minetest.settings:get_bool("sprinting_require_ground", true)
-local SPRINT_ON_CLIMBABLE = minetest.settings:get_bool("sprinting_sprint_on_climbable", false)
-local SPRINT_IN_LIQUIDS = minetest.settings:get_bool("sprinting_sprint_in_liquids", true)
+local REQUIRE_GROUND = core.settings:get_bool("sprinting_require_ground", true)
+local SPRINT_ON_CLIMBABLE = core.settings:get_bool("sprinting_sprint_on_climbable", false)
+local SPRINT_IN_LIQUIDS = core.settings:get_bool("sprinting_sprint_in_liquids", true)
 
-local SPAWN_PARTICLES = minetest.settings:get_bool("sprinting_spawn_particles", true)
-local CHANGE_FOV = minetest.settings:get_bool("sprinting_change_fov", true)
-local FOV_BOOST = minetest.settings:get("sprinting_fov_boost") or 20
-local FOV_TRANSITION_TIME = minetest.settings:get("sprinting_fov_transition_time") or 0.4
+local SPAWN_PARTICLES = core.settings:get_bool("sprinting_spawn_particles", true)
+local CHANGE_FOV = core.settings:get_bool("sprinting_change_fov", true)
+local FOV_BOOST = core.settings:get("sprinting_fov_boost") or 20
+local FOV_TRANSITION_TIME = core.settings:get("sprinting_fov_transition_time") or 0.4
 
 -- Detect compatible mods for stamina/hunger systems
-local has_stamina = minetest.get_modpath("stamina") and stamina
-local has_hunger_ng = minetest.get_modpath("hunger_ng") and hunger_ng
-local has_hbhunger = minetest.get_modpath("hbhunger") and hbhunger
+local has_stamina = core.get_modpath("stamina") and stamina
+local has_hunger_ng = core.get_modpath("hunger_ng") and hunger_ng
+local has_hbhunger = core.get_modpath("hbhunger") and hbhunger
 
 -- Detect compatible mods for player animations
-local has_character_anim = minetest.get_modpath("character_anim") ~= nil
+local has_character_anim = core.get_modpath("character_anim") ~= nil
 
 -- Remove sprint from mod Stamina
 if has_stamina then
@@ -91,7 +91,7 @@ local ANIM_SPEED_IDLE = 30               -- Base animation speed
 local ANIM_SPEED_SPRINT = ANIM_SPEED_IDLE * SPEED_MULTIPLIER -- Faster animations when sprinting
 
 -- Initialize player data on join
-minetest.register_on_joinplayer(function(player)
+core.register_on_joinplayer(function(player)
     local name = player:get_player_name()
     local physics = player:get_physics_override()
     
@@ -105,7 +105,7 @@ minetest.register_on_joinplayer(function(player)
         lying_on_bed,
         double_tap,
         last_key_time = 0,          -- Timestamp of last forward key press
-        original_fov = minetest.settings:get("fov") or DEFAULT_FOV, -- Save original FOV
+        original_fov = core.settings:get("fov") or DEFAULT_FOV, -- Save original FOV
         current_fov = 0, -- reset value
         original_speed = physics.speed, -- Base movement speed
         original_jump = physics.jump,   -- Base jump height
@@ -130,7 +130,7 @@ minetest.register_on_joinplayer(function(player)
 end)
 
 -- Cleanup player data on leave
-minetest.register_on_leaveplayer(function(player)
+core.register_on_leaveplayer(function(player)
     local name = player:get_player_name()
     local data = sprint_players[name]
     
@@ -143,8 +143,8 @@ minetest.register_on_leaveplayer(function(player)
 end)
 
 -- Main loop for sprinting logic
-minetest.register_globalstep(function(dtime)
-    for _, player in ipairs(minetest.get_connected_players()) do
+core.register_globalstep(function(dtime)
+    for _, player in ipairs(core.get_connected_players()) do
         local name = player:get_player_name()
         local data = sprint_players[name]
         if not data then return end
@@ -153,7 +153,7 @@ minetest.register_globalstep(function(dtime)
         local pos = player:get_pos()
         local dir = player:get_look_dir()
 
-        data.node_below_player = minetest.get_node(vector.new(pos.x, pos.y-0.1, pos.z))        
+        data.node_below_player = core.get_node(vector.new(pos.x, pos.y-0.1, pos.z))        
         data.in_liquid = player_is_in_liquid(pos)
         data.on_climbable = player_is_on_climbable(player)
         data.lying_on_bed = player_is_lying_on_bed(player, data.node_below_player)
@@ -227,7 +227,7 @@ minetest.register_globalstep(function(dtime)
 
                 local no_particles_node = (function()
                     for _, group in ipairs(no_particles_node_groups) do
-                        if minetest.get_item_group(data.node_below_player.name, group) ~= 0 then
+                        if core.get_item_group(data.node_below_player.name, group) ~= 0 then
                             return true
                         end
                     end
@@ -243,7 +243,7 @@ minetest.register_globalstep(function(dtime)
                         local texture = get_particle_texture(data.node_below_player)
                         
                         if texture then
-                            minetest.add_particlespawner({
+                            core.add_particlespawner({
                                 amount = math.random(1, 2),
                                 time = 0.1,
                                 minpos = {x=-0.5, y=0.1, z=-0.5},
@@ -284,7 +284,7 @@ minetest.register_globalstep(function(dtime)
         local sprint_speed = data.original_speed * SPEED_MULTIPLIER
 
         if data.sprinting and controls.up and not data.on_climbable then
-            local now = minetest.get_us_time() / 1e6
+            local now = core.get_us_time() / 1e6
             if now - data.sprint_start_time > GRACE_TIME and
             hvel < sprint_speed then
                 data.collision = true

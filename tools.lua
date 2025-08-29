@@ -12,7 +12,7 @@ end
 
 local function player_is_on_ground(pos)
   for _, dy in ipairs({-0.1, -0.5, 0.1}) do
-    local n = minetest.get_node({x=pos.x, y=pos.y+dy, z=pos.z})
+    local n = core.get_node({x=pos.x, y=pos.y+dy, z=pos.z})
     if n.name ~= "air" then
       return true
     end
@@ -21,8 +21,8 @@ local function player_is_on_ground(pos)
 end
 
 local function player_is_in_liquid(pos)
-    local feet_pos = { x = pos.x, y = pos.y, z = pos.z }           
-    local below_feet_pos = { x = pos.x, y = pos.y - 1, z = pos.z }
+    local feet_pos = { x = pos.x, y = pos.y - 0.15, z = pos.z }           
+    local below_feet_pos = { x = pos.x, y = pos.y + 0.85, z = pos.z }
     local check_positions = { feet_pos, below_feet_pos }
 
     for _, p in ipairs(check_positions) do
@@ -41,15 +41,15 @@ end
 local function player_is_on_climbable(player)
     local pos = player:get_pos()
     pos.y = pos.y - 0.5
-    local node = minetest.get_node_or_nil(pos)
+    local node = core.get_node_or_nil(pos)
     if node then
-        local nodedef = minetest.registered_nodes[node.name]
+        local nodedef = core.registered_nodes[node.name]
         return nodedef and nodedef.climbable or false
     end
     return false
 end
 
-local has_beds = minetest.get_modpath("beds") ~= nil
+local has_beds = core.get_modpath("beds") ~= nil
 local function player_is_lying_on_bed(player, node)
     if has_beds then
         if not player or not beds.player then
@@ -63,7 +63,7 @@ local function player_is_lying_on_bed(player, node)
 end
 
 local function get_particle_texture(node)
-    local node_def = minetest.registered_nodes[node.name]
+    local node_def = core.registered_nodes[node.name]
     if not node_def or not node_def.tiles then
         return nil
     end
@@ -84,7 +84,7 @@ end
 
 local function check_for_double_tap(controls, data, DOUBLE_TAP_TIME)
     if controls.up and not data.was_pressing_forward and not controls.down and not controls.sneak then
-        local current_time = minetest.get_us_time() / 1e6
+        local current_time = core.get_us_time() / 1e6
         if (current_time - data.last_key_time) < DOUBLE_TAP_TIME then
             return true
         end
